@@ -20,13 +20,13 @@ Existing VCF parsers either load the entire file into memory at once, keep INFO 
 ## Installation
 
 ```bash
-pip install git+https://github.com/rvk20/vcfv.git
+pip install vcfv
 ```
 
 With Pandas support:
 
 ```bash
-pip install git+https://github.com/rvk20/vcfv.git[pandas]
+pip install vcfv[pandas]
 ```
 
 ## Usage
