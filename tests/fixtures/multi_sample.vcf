@@ -1,0 +1,15 @@
+##fileformat=VCFv4.2
+##reference=GRCh38
+##INFO=<ID=AC,Number=1,Type=Integer,Description="Allele count">
+##INFO=<ID=AF,Number=1,Type=Float,Description="Allele frequency">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Read depth">
+##INFO=<ID=DB,Number=0,Type=Flag,Description="dbSNP membership">
+##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description="Somatic mutation">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allele depth">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Sample1	Sample2	Sample3
+chr5	134186786	.	G	C	198.95	PASS	AC=1;AF=0.739;DP=170;DB	GT:DP:AD	1/1:160:41,119	0/1:36:15,21	0/0:85:63,22
+chr3	66745867	.	A	C	482.78	PASS	AC=4;AF=0.898;DP=470;DB	GT:DP:AD	1/1:116:50,66	0/0:46:25,21	0/1:95:50,45
+chr4	228007144	.	T	A	335.64	PASS	AC=4;AF=0.919;DP=77;DB;SOMATIC	GT:DP:AD	0/0:160:30,130	0/0:144:61,83	1/1:89:19,70
+chr11	32809927	.	C	G	289.66	PASS	AC=2;AF=0.328;DP=331	GT:DP:AD	0/1:122:20,102	1/1:38:13,25	0/1:196:170,26

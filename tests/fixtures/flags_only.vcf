@@ -1,0 +1,8 @@
+##fileformat=VCFv4.2
+##INFO=<ID=DB,Number=0,Type=Flag,Description="dbSNP membership">
+##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description="Somatic mutation">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Sample1
+chr1	100	.	A	T	50.0	PASS	DB;SOMATIC	GT	0/1
+chr1	200	.	G	C	30.0	PASS	DB	GT	1/1
+chr1	300	.	T	A	99.0	PASS	SOMATIC	GT	0/0
