@@ -36,7 +36,9 @@ def read_vcf(
     *,
     lazy: bool = False,
     parse_info: Literal[False, "wide", "struct", "auto"] = "auto",
+    infer_info_keys_from: int | Literal["header", "all"] = "header",
     parse_format: Literal[False, "wide", "struct", "auto"] = "auto",
+    infer_format_keys_from: int | Literal["header", "all"] = "header",
     min_qual: float | None = None,
     region: str | None = None,
     fields: list[str] | None = None,
@@ -57,9 +59,9 @@ def read_vcf(
     lf = lf.with_columns(
         pl.col("QUAL").cast(pl.Float64, strict=False)
     )
-    
-    lf = apply_info_strategy(lf, parse_info)
-    lf = apply_format_strategy(lf, parse_format, header_cols, meta["FORMAT"])
+
+    lf = apply_info_strategy(lf, parse_info, meta["INFO"], infer_info_keys_from)
+    lf = apply_format_strategy(lf, parse_format, header_cols, meta["FORMAT"], infer_format_keys_from)
 
     if min_qual is not None:
         lf = lf.filter(pl.col("QUAL") >= min_qual)

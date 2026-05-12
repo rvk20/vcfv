@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import polars as pl
 
 
@@ -16,14 +18,20 @@ def resolve_parse_format(parse_format, sample_count):
         return False
 
 
-def apply_format_strategy(lf, parse_format, header_cols, format_meta):
+def apply_format_strategy(
+    lf: pl.LazyFrame,
+    parse_format,
+    header_cols: list[str],
+    format_meta: dict,
+    infer_format_keys_from: int | str = "header",
+) -> pl.LazyFrame:
     if parse_format is False:
         return lf
 
     sample_cols = header_cols[9:]
 
     if parse_format == "wide":
-        return _apply_format_wide(lf, sample_cols, format_meta)
+        return _apply_format_wide(lf, sample_cols, format_meta, infer_format_keys_from)
 
     if parse_format == "struct":
         return _apply_format_struct(lf, sample_cols)
@@ -35,11 +43,9 @@ def _apply_format_struct(
     lf: pl.LazyFrame,
     sample_cols: list[str],
 ) -> pl.LazyFrame:
-
     format_keys = pl.col("FORMAT").str.split(":")
 
     exprs = []
-
     for col in sample_cols:
         exprs.append(
             pl.struct(
@@ -53,30 +59,92 @@ def _apply_format_struct(
     return lf.with_columns(exprs)
 
 
-def _apply_format_wide(
+def _collect_format_keys(
     lf: pl.LazyFrame,
-    sample_cols: list[str],
     format_meta: dict,
-) -> pl.LazyFrame:
-    format_keys = _collect_format_keys_fallback(lf)
+    infer_from: int | str = "header",
+) -> list[str]:
+    if infer_from == "header":
+        if format_meta:
+            return list(format_meta.keys())
+        return _collect_format_keys_from_first_row(lf)
 
-    exprs = []
+    if infer_from == "all":
+        return _collect_format_keys_streaming(lf)
 
-    for sample in sample_cols:
-        values = pl.col(sample).str.split(":")
+    if format_meta:
+        header_keys = set(format_meta.keys())
+    else:
+        header_keys = set(_collect_format_keys_from_first_row(lf))
 
-        for i, key in enumerate(format_keys):
-            exprs.append(
-                values.list.get(i, null_on_oob=True).alias(f"{sample}_{key}")
-            )
+    sample_keys = set(
+        lf.head(infer_from)
+        .select(pl.col("FORMAT").str.split(":").explode().unique())
+        .collect()
+        .to_series()
+        .to_list()
+    )
 
-    return lf.with_columns(exprs)
+    undeclared = sample_keys - header_keys
+    if undeclared:
+        import warnings
+        warnings.warn(
+            f"Found FORMAT keys not declared in header: {sorted(undeclared)}. "
+            f"Detected from first {infer_from} rows only — "
+            "further undeclared keys may exist.",
+            UserWarning,
+            stacklevel=3,
+        )
+
+    return list(header_keys | sample_keys)
 
 
-def _collect_format_keys_fallback(lf: pl.LazyFrame) -> list[str]:
+def _collect_format_keys_from_first_row(lf: pl.LazyFrame) -> list[str]:
     first_format = (
         lf.select(pl.col("FORMAT").first())
         .collect()
         .item()
     )
     return first_format.split(":")
+
+
+def _collect_format_keys_streaming(lf: pl.LazyFrame) -> list[str]:
+    all_keys: set[str] = set()
+    offset = 0
+    chunk_size = 10_000
+
+    while True:
+        chunk_keys = (
+            lf.slice(offset, chunk_size)
+            .select(pl.col("FORMAT").str.split(":").explode().unique())
+            .collect()
+            .to_series()
+            .to_list()
+        )
+
+        if not chunk_keys:
+            break
+
+        all_keys.update(chunk_keys)
+        offset += chunk_size
+
+    return list(all_keys)
+
+
+def _apply_format_wide(
+    lf: pl.LazyFrame,
+    sample_cols: list[str],
+    format_meta: dict,
+    infer_from: int | str = "header",
+) -> pl.LazyFrame:
+    format_keys = _collect_format_keys(lf, format_meta, infer_from)
+
+    exprs = []
+    for sample in sample_cols:
+        values = pl.col(sample).str.split(":")
+        for i, key in enumerate(format_keys):
+            exprs.append(
+                values.list.get(i, null_on_oob=True).alias(f"{sample}_{key}")
+            )
+
+    return lf.with_columns(exprs)
