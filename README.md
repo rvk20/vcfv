@@ -1,3 +1,6 @@
+## What's new in 0.3.0
+- `.vcf.gz` files are now streamed lazily without loading into memory
+
 # vcfv
 
 Fast VCF parser to Polars/Pandas DataFrame with INFO and FORMAT field expansion.
@@ -237,7 +240,7 @@ vcfv is the only tool in this comparison that does so in a single call.
 | Format | Support |
 |--------|---------|
 | `.vcf` | ✅ Full lazy streaming |
-| `.vcf.gz` | ✅ Decompressed into memory before parsing |
+| `.vcf.gz` | ✅ Lazy streaming (from v0.3.0) |
 | `.bcf` | ❌ Not supported yet |
 
 ## Requirements

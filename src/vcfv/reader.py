@@ -9,26 +9,14 @@ from .info import apply_info_strategy, resolve_parse_info
 
 
 def _scan_vcf(path: Path, skip_rows: int) -> pl.LazyFrame:
-    if path.suffix == ".gz":
-        with gzip.open(path, "rb") as f:
-            buf = io.BytesIO(f.read())
-        return pl.scan_csv(
-            buf,
-            separator="\t",
-            skip_rows=skip_rows,
-            has_header=True,
-            comment_prefix=None,
-            infer_schema_length=1000,
-        )
-    else:
-        return pl.scan_csv(
-            path,
-            separator="\t",
-            skip_rows=skip_rows,
-            has_header=True,
-            comment_prefix=None,
-            infer_schema_length=1000,
-        )
+    return pl.scan_csv(
+                path,
+                separator="\t",
+                skip_rows=skip_rows,
+                has_header=True,
+                comment_prefix=None,
+                infer_schema_length=1000,
+            )
 
 
 def read_vcf(
