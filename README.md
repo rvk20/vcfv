@@ -1,5 +1,7 @@
 ## What's new in 0.3.0
-- `.vcf.gz` files are now streamed lazily without loading into memory
+- `.vcf.gz` files are now streamed lazily without loading into memory.
+- Fixed FORMAT field mapping in parse_format="wide" when field order varies between records.
+- Fixed infer_info_keys_from="all" to continue scanning when chunks contain no INFO fields (INFO="."), ensuring keys in later records are discovered.
 
 # vcfv
 

@@ -138,13 +138,28 @@ def _apply_format_wide(
     infer_from: int | str = "header",
 ) -> pl.LazyFrame:
     format_keys = _collect_format_keys(lf, format_meta, infer_from)
-
+    format_parts = pl.col("FORMAT").str.split(":")
     exprs = []
+
     for sample in sample_cols:
         values = pl.col(sample).str.split(":")
-        for i, key in enumerate(format_keys):
+
+        for key in format_keys:
+            key_position = (
+                pl.when(format_parts.list.contains(key))
+                .then(
+                    format_parts
+                    .list.eval(pl.element() == pl.lit(key))
+                    .list.arg_max()
+                )
+                .otherwise(None)
+            )
+
             exprs.append(
-                values.list.get(i, null_on_oob=True).alias(f"{sample}_{key}")
+                values.list.get(
+                    key_position,
+                    null_on_oob=True,
+                ).alias(f"{sample}_{key}")
             )
 
     return lf.with_columns(exprs)

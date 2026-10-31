@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 import polars as pl
@@ -79,8 +80,10 @@ def _collect_info_keys_streaming(lf: pl.LazyFrame) -> list[str]:
     chunk_size = 10_000
 
     while True:
+        chunk = lf.slice(offset, chunk_size)
+
         chunk_keys = (
-            lf.slice(offset, chunk_size)
+            chunk
             .select(pl.col("INFO").str.split(";").explode().alias("pair"))
             .filter(pl.col("pair") != ".")
             .select(pl.col("pair").str.split("=").list.first().unique())
@@ -90,7 +93,15 @@ def _collect_info_keys_streaming(lf: pl.LazyFrame) -> list[str]:
         )
 
         if not chunk_keys:
-            break
+            chunk_rows = (
+                chunk
+                .select(pl.len())
+                .collect()
+                .item()
+            )
+
+            if chunk_rows == 0:
+                break
 
         all_keys.update(chunk_keys)
         offset += chunk_size
